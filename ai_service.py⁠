@@ -5,22 +5,14 @@ import io
 import streamlit as st
 
 def configure_apis() -> genai.Client:
-    """
-    Instancia o novo SDK unificado do Google usando a chave salva nos secrets.
-    """
     gemini_key = st.secrets.get("GEMINI_API_KEY")
     
     if not gemini_key:
         raise ValueError("A chave GEMINI_API_KEY não está configurada nos secrets do Streamlit.")
         
-    # Retorna o Client oficial configurado
     return genai.Client(api_key=gemini_key)
 
 def generate_enhanced_prompt(client: genai.Client, user_text: str, image: Image.Image) -> str:
-    """
-    Etapa 1: O modelo Gemini 3.6 Flash analisa a foto enviada e o desejo do usuário 
-    para atuar como um Designer Sênior e criar um prompt hiperdetalhado em inglês.
-    """
     try:
         system_instruction = (
             "You are an Elite AI Prompt Designer specializing in Graphic Design and Commercial Banners. "
@@ -33,7 +25,6 @@ def generate_enhanced_prompt(client: genai.Client, user_text: str, image: Image.
         
         user_message = f"User Intent for the banner: {user_text}"
         
-        # Chamada à API utilizando a versão 3.6 Flash
         response = client.models.generate_content(
             model='gemini-3.6-flash',
             contents=[image, user_message],
@@ -54,22 +45,17 @@ def generate_enhanced_prompt(client: genai.Client, user_text: str, image: Image.
                 f"Core theme: {user_text}. Stunning cinematic lighting, perfect composition, vibrant colors.")
 
 def generate_banner_image(client: genai.Client, prompt: str) -> Image.Image:
-    """
-    Etapa 2: Envia o prompt hiperdetalhado gerado para o Google Imagen 3.
-    Retorna a imagem final diretamente como um objeto PIL Image.
-    """
     try:
         response = client.models.generate_images(
             model='imagen-3.0-generate-002',
             prompt=prompt,
             config=types.GenerateImagesConfig(
                 number_of_images=1,
-                aspect_ratio="16:9", # Proporção ideal para banners comerciais/web
+                aspect_ratio="16:9", 
                 output_mime_type="image/jpeg"
             )
         )
         
-        # O novo SDK retorna os bytes da imagem diretamente
         image_bytes = response.generated_images[0].image.image_bytes
         final_image = Image.open(io.BytesIO(image_bytes))
         
