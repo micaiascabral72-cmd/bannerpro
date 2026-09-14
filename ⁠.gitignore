@@ -1,7 +1,0 @@
-# Ignora a chave de API (nunca envia para o GitHub)
-.streamlit/secrets.toml
-
-# Ignora pastas de ambiente virtual e cache Python
-__pycache__/
-venv/
-.env
