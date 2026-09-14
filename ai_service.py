@@ -26,8 +26,7 @@ def generate_enhanced_prompt(client: genai.Client, user_text: str, image: Image.
             model='gemini-3.6-flash',
             contents=[image, user_message],
             config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.7
+                system_instruction=system_instruction
             )
         )
         if response.text:
@@ -41,17 +40,15 @@ def generate_enhanced_prompt(client: genai.Client, user_text: str, image: Image.
 
 def generate_banner_image(client: genai.Client, prompt: str) -> Image.Image:
     try:
-        response = client.models.generate_images(
-            model='imagen-3.0-generate-002',
-            prompt=prompt,
-            config=types.GenerateImagesConfig(
-                number_of_images=1,
-                aspect_ratio="16:9",
-                output_mime_type="image/jpeg"
-            )
+        response = client.models.generate_content(
+            model='gemini-2.5-flash-image',
+            contents=f"{prompt}\n\nGenerate this as a 16:9 widescreen banner image."
         )
-        image_bytes = response.generated_images[0].image.image_bytes
-        final_image = Image.open(io.BytesIO(image_bytes))
-        return final_image
+        for part in response.candidates[0].content.parts:
+            if part.inline_data is not None:
+                image_bytes = part.inline_data.data
+                final_image = Image.open(io.BytesIO(image_bytes))
+                return final_image
+        raise ValueError("O modelo não retornou nenhuma imagem.")
     except Exception as e:
-        raise RuntimeError(f"Falha na API de geração de imagem (Google Imagen 3): {str(e)}")
+        raise RuntimeError(f"Falha na API de geração de imagem (Gemini Image): {str(e)}")
